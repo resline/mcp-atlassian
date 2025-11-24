@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from typing import Literal
 
-from ..utils.env import get_custom_headers, is_env_ssl_verify
+from ..utils.env import get_custom_headers, parse_ssl_verify
 from ..utils.oauth import (
     BYOAccessTokenOAuthConfig,
     OAuthConfig,
@@ -29,7 +29,7 @@ class ConfluenceConfig:
     api_token: str | None = None  # API token used as password
     personal_token: str | None = None  # Personal access token (Server/DC)
     oauth_config: OAuthConfig | BYOAccessTokenOAuthConfig | None = None
-    ssl_verify: bool = True  # Whether to verify SSL certificates
+    ssl_verify: bool | str = True  # SSL verification: True/False or path to CA bundle
     spaces_filter: str | None = None  # List of space keys to filter searches
     http_proxy: str | None = None  # HTTP proxy URL
     https_proxy: str | None = None  # HTTPS proxy URL
@@ -58,11 +58,11 @@ class ConfluenceConfig:
         return is_atlassian_cloud_url(self.url) if self.url else False
 
     @property
-    def verify_ssl(self) -> bool:
+    def verify_ssl(self) -> bool | str:
         """Compatibility property for old code.
 
         Returns:
-            The ssl_verify value
+            The ssl_verify value (bool or path to CA bundle)
         """
         return self.ssl_verify
 
@@ -112,8 +112,8 @@ class ConfluenceConfig:
                 error_msg = "Server/Data Center authentication requires CONFLUENCE_PERSONAL_TOKEN or CONFLUENCE_USERNAME and CONFLUENCE_API_TOKEN"
                 raise ValueError(error_msg)
 
-        # SSL verification (for Server/DC)
-        ssl_verify = is_env_ssl_verify("CONFLUENCE_SSL_VERIFY")
+        # SSL verification (for Server/DC) - supports bool or custom CA bundle path
+        ssl_verify = parse_ssl_verify("CONFLUENCE_SSL_VERIFY")
 
         # Get the spaces filter if provided
         spaces_filter = os.getenv("CONFLUENCE_SPACES_FILTER")
