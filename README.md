@@ -240,8 +240,67 @@ For Server/Data Center deployments, use direct variable passing:
 }
 ```
 
-> [!NOTE]
-> Set `CONFLUENCE_SSL_VERIFY` and `JIRA_SSL_VERIFY` to "false" only if you have self-signed certificates.
+#### SSL Certificate Configuration
+
+The `CONFLUENCE_SSL_VERIFY` and `JIRA_SSL_VERIFY` environment variables control SSL certificate verification for Server/Data Center deployments and accept three types of values:
+
+**1. Full Verification (Default - Recommended)**
+```json
+"CONFLUENCE_SSL_VERIFY": "true",
+"JIRA_SSL_VERIFY": "true"
+```
+Uses the system's default CA bundle for certificate validation.
+
+**2. Custom CA Bundle (Recommended for Corporate Environments)**
+```json
+"CONFLUENCE_SSL_VERIFY": "/path/to/your/ca-bundle.pem",
+"JIRA_SSL_VERIFY": "/path/to/your/ca-bundle.pem"
+```
+Validates certificates against your organization's custom CA certificate bundle. This is the recommended approach for enterprises using self-signed certificates or internal CAs.
+
+**Docker Example with Custom CA:**
+```json
+{
+  "mcpServers": {
+    "mcp-atlassian": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "/path/to/certs:/certs:ro",
+        "-e", "JIRA_URL",
+        "-e", "JIRA_PERSONAL_TOKEN",
+        "-e", "JIRA_SSL_VERIFY",
+        "ghcr.io/sooperset/mcp-atlassian:latest"
+      ],
+      "env": {
+        "JIRA_URL": "https://jira.your-company.com",
+        "JIRA_PERSONAL_TOKEN": "your_jira_pat",
+        "JIRA_SSL_VERIFY": "/certs/ca-bundle.pem"
+      }
+    }
+  }
+}
+```
+
+**3. Disable Verification (Not Recommended)**
+```json
+"CONFLUENCE_SSL_VERIFY": "false",
+"JIRA_SSL_VERIFY": "false"
+```
+
+> [!WARNING]
+> Disabling SSL verification should only be used for testing or development environments. For production, use a custom CA bundle instead.
+
+**How to Obtain Your Organization's CA Bundle:**
+- Contact your IT/Security team for the certificate file
+- Export from your browser: Visit your Atlassian instance, view certificate details, and export the full chain
+- On Linux/macOS: Often provided by your organization as a `.pem` or `.crt` file
+
+**Platform-Specific Certificate Paths:**
+- **Ubuntu/Debian**: `/etc/ssl/certs/ca-certificates.crt`
+- **RHEL/CentOS**: `/etc/pki/tls/certs/ca-bundle.crt`
+- **macOS**: `/etc/ssl/cert.pem`
+- **Windows**: Export from Certificate Manager (`certmgr.msc`)
 
 </details>
 
@@ -803,7 +862,10 @@ The server provides two ways to control tool access:
     - For Cloud: Check your API tokens (not your account password)
     - For Server/Data Center: Verify your personal access token is valid and not expired
     - For older Confluence servers: Some older versions require basic authentication with `CONFLUENCE_USERNAME` and `CONFLUENCE_API_TOKEN` (where token is your password)
-- **SSL Certificate Issues**: If using Server/Data Center and encounter SSL errors, set `CONFLUENCE_SSL_VERIFY=false` or `JIRA_SSL_VERIFY=false`
+- **SSL Certificate Issues**:
+    - **Recommended Solution**: For Server/Data Center with self-signed or corporate certificates, use a custom CA bundle: `CONFLUENCE_SSL_VERIFY=/path/to/ca-bundle.pem` or `JIRA_SSL_VERIFY=/path/to/ca-bundle.pem` (see [SSL Certificate Configuration](#ssl-certificate-configuration) for details)
+    - **Quick Fix (Development Only)**: Set `CONFLUENCE_SSL_VERIFY=false` or `JIRA_SSL_VERIFY=false` to disable verification (not recommended for production)
+    - **Error: "certificate verify failed"**: Your Atlassian instance uses a certificate not trusted by the system. Use a custom CA bundle or contact your IT team
 - **Permission Errors**: Ensure your Atlassian account has sufficient permissions to access the spaces/projects
 - **Custom Headers Issues**: See the ["Debugging Custom Headers"](#debugging-custom-headers) section below to analyze and resolve issues with custom headers
 

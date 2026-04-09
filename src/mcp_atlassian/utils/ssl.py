@@ -70,23 +70,28 @@ class SSLIgnoreAdapter(HTTPAdapter):
 
 
 def configure_ssl_verification(
-    service_name: str, url: str, session: Session, ssl_verify: bool
+    service_name: str, url: str, session: Session, ssl_verify: bool | str
 ) -> None:
     """Configure SSL verification for a specific service.
 
-    If SSL verification is disabled, this function will configure the session
-    to use a custom SSL adapter that bypasses certificate validation for the
-    service's domain.
+    This function supports three modes of SSL verification:
+    1. True: Use system CA bundle for verification (default, secure)
+    2. False: Disable SSL verification completely (insecure, testing only)
+    3. str: Path to custom CA bundle file (secure, for custom CAs)
 
     Args:
         service_name: Name of the service for logging (e.g., "Confluence", "Jira")
         url: The base URL of the service
         session: The requests session to configure
-        ssl_verify: Whether SSL verification should be enabled
+        ssl_verify: SSL verification setting:
+            - True: verify with system CA bundle
+            - False: disable verification (insecure)
+            - str: path to custom CA bundle file
     """
-    if not ssl_verify:
+    if ssl_verify is False:  # Explicitly check for False
         logger.warning(
-            f"{service_name} SSL verification disabled. This is insecure and should only be used in testing environments."
+            f"{service_name} SSL verification disabled. "
+            f"This is insecure and should only be used in testing environments."
         )
 
         # Get the domain from the configured URL
@@ -96,3 +101,17 @@ def configure_ssl_verification(
         adapter = SSLIgnoreAdapter()
         session.mount(f"https://{domain}", adapter)
         session.mount(f"http://{domain}", adapter)
+
+    elif isinstance(ssl_verify, str):
+        # Custom CA bundle path
+        logger.info(
+            f"{service_name} using custom CA bundle: {ssl_verify[:50]}{'...' if len(ssl_verify) > 50 else ''}"
+        )
+        # Set session.verify to the custom CA path
+        # This tells requests library to use this specific CA bundle
+        session.verify = ssl_verify
+
+    else:  # ssl_verify is True
+        # Default behavior - use system CA bundle
+        # session.verify remains True (default)
+        logger.debug(f"{service_name} SSL verification enabled with system CA bundle")

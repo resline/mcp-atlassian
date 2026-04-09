@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from typing import Literal
 
-from ..utils.env import get_custom_headers, is_env_ssl_verify
+from ..utils.env import get_custom_headers, parse_ssl_verify
 from ..utils.oauth import (
     BYOAccessTokenOAuthConfig,
     OAuthConfig,
@@ -29,7 +29,7 @@ class JiraConfig:
     api_token: str | None = None  # API token (Cloud)
     personal_token: str | None = None  # Personal access token (Server/DC)
     oauth_config: OAuthConfig | BYOAccessTokenOAuthConfig | None = None
-    ssl_verify: bool = True  # Whether to verify SSL certificates
+    ssl_verify: bool | str = True  # SSL verification: True/False or path to CA bundle
     projects_filter: str | None = None  # List of project keys to filter searches
     http_proxy: str | None = None  # HTTP proxy URL
     https_proxy: str | None = None  # HTTPS proxy URL
@@ -58,11 +58,11 @@ class JiraConfig:
         return is_atlassian_cloud_url(self.url) if self.url else False
 
     @property
-    def verify_ssl(self) -> bool:
+    def verify_ssl(self) -> bool | str:
         """Compatibility property for old code.
 
         Returns:
-            The ssl_verify value
+            The ssl_verify value (bool or path to CA bundle)
         """
         return self.ssl_verify
 
@@ -112,8 +112,8 @@ class JiraConfig:
                 error_msg = "Server/Data Center authentication requires JIRA_PERSONAL_TOKEN or JIRA_USERNAME and JIRA_API_TOKEN"
                 raise ValueError(error_msg)
 
-        # SSL verification (for Server/DC)
-        ssl_verify = is_env_ssl_verify("JIRA_SSL_VERIFY")
+        # SSL verification (for Server/DC) - supports bool or custom CA bundle path
+        ssl_verify = parse_ssl_verify("JIRA_SSL_VERIFY")
 
         # Get the projects filter if provided
         projects_filter = os.getenv("JIRA_PROJECTS_FILTER")

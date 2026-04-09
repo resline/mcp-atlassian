@@ -65,11 +65,14 @@ class JiraClient:
             )
 
             # Initialize Jira with the session
+            # Note: atlassian-python-api only accepts bool for verify_ssl
+            # Custom CA paths are handled in configure_ssl_verification() below
+            verify_ssl_bool = self.config.ssl_verify if isinstance(self.config.ssl_verify, bool) else True
             self.jira = Jira(
                 url=api_url,
                 session=session,
                 cloud=True,  # OAuth is only for Cloud
-                verify_ssl=self.config.ssl_verify,
+                verify_ssl=verify_ssl_bool,
             )
         elif self.config.auth_type == "pat":
             logger.debug(
@@ -77,11 +80,14 @@ class JiraClient:
                 f"URL: {self.config.url}, "
                 f"Token (masked): {mask_sensitive(str(self.config.personal_token))}"
             )
+            # Note: atlassian-python-api only accepts bool for verify_ssl
+            # Custom CA paths are handled in configure_ssl_verification() below
+            verify_ssl_bool = self.config.ssl_verify if isinstance(self.config.ssl_verify, bool) else True
             self.jira = Jira(
                 url=self.config.url,
                 token=self.config.personal_token,
                 cloud=self.config.is_cloud,
-                verify_ssl=self.config.ssl_verify,
+                verify_ssl=verify_ssl_bool,
             )
         else:  # basic auth
             logger.debug(
@@ -90,12 +96,15 @@ class JiraClient:
                 f"API Token present: {bool(self.config.api_token)}, "
                 f"Is Cloud: {self.config.is_cloud}"
             )
+            # Note: atlassian-python-api only accepts bool for verify_ssl
+            # Custom CA paths are handled in configure_ssl_verification() below
+            verify_ssl_bool = self.config.ssl_verify if isinstance(self.config.ssl_verify, bool) else True
             self.jira = Jira(
                 url=self.config.url,
                 username=self.config.username,
                 password=self.config.api_token,
                 cloud=self.config.is_cloud,
-                verify_ssl=self.config.ssl_verify,
+                verify_ssl=verify_ssl_bool,
             )
             logger.debug(
                 f"Jira client initialized. Session headers (Authorization masked): "
