@@ -1,0 +1,70 @@
+version: 1
+name: mcp-atlassian
+tagline: Serwer MCP łączący Jirę i Confluence z asystentami AI poprzez bezpieczny protokół narzędzi.
+description: |-
+  MCP Atlassian to serwer implementujący Model Context Protocol (MCP), który udostępnia narzędziom AI (np. Claude Desktop, Cursor, innym asystentom kompatybilnym z MCP) bezpieczny dostęp do produktów Atlassiana — Jira i Confluence. Projekt tłumaczy operacje na tych systemach (wyszukiwanie, odczyt, tworzenie i modyfikację zasobów) na zestaw ustandaryzowanych narzędzi MCP, które model językowy może wywoływać w trakcie rozmowy, np. „zaktualizuj zgłoszenie w Jirze na podstawie notatek ze spotkania” albo „znajdź stronę w Confluence i ją podsumuj”.
+
+  Serwer wspiera zarówno wdrożenia chmurowe (Atlassian Cloud), jak i lokalne (Server/Data Center), z trzema metodami uwierzytelniania: tokenami API, Personal Access Token oraz pełnym OAuth 2.0 (włącznie z trybem multi-cloud, gdzie każdy użytkownik łączy się z własną instancją). Aplikacja jest napisana w Pythonie z użyciem frameworka FastMCP/MCP SDK, zbudowana modułowo (osobne pakiety dla klientów Jira i Confluence, modeli danych, preprocessing treści, serwerów narzędzi) i dystrybuowana głównie jako obraz Docker, z możliwością uruchomienia przez stdio, SSE lub streamable-HTTP. Projekt oferuje mechanizmy kontroli dostępu (tryb tylko-do-odczytu, filtrowanie dostępnych narzędzi, filtrowanie przestrzeni/projektów), obsługę proxy, niestandardowe nagłówki HTTP oraz rozbudowane logowanie z maskowaniem danych wrażliwych.
+
+  Repozytorium zawiera bogaty zestaw testów jednostkowych i integracyjnych (katalog tests/), konfigurację CI/CD (GitHub Actions do lintowania, testów, publikacji paczki i obrazu Docker), devcontainer do developmentu oraz szczegółową dokumentację (README, CONTRIBUTING, SECURITY). Jest to projekt open-source (licencja MIT), niebędący oficjalnym produktem Atlassiana, aktywnie rozwijany przez społeczność (autor: sooperset), publikowany jako pakiet PyPI oraz obraz na GHCR.
+features:
+  - name: Narzędzia Jira
+    description: "Zestaw operacji na Jirze udostępnianych jako narzędzia MCP: wyszukiwanie JQL, odczyt/tworzenie/aktualizacja/usuwanie zgłoszeń, komentarze, worklogi, przejścia statusów, epiki, sprinty, tablice Agile, linki między zgłoszeniami, wersje projektów, załączniki i profile użytkowników."
+    status: done
+  - name: Narzędzia Confluence
+    description: "Operacje na Confluence jako narzędzia MCP: wyszukiwanie CQL, odczyt/tworzenie/aktualizacja/usuwanie stron, komentarze, etykiety, hierarchia stron (page children) oraz wyszukiwanie użytkowników."
+    status: done
+  - name: Uwierzytelnianie wieloma metodami
+    description: Obsługa API Token (Cloud), Personal Access Token (Server/Data Center) oraz pełnego OAuth 2.0 z kreatorem konfiguracji (--oauth-setup), w tym trybu Bring-Your-Own-Token (BYOT) i multi-cloud OAuth dla wielu użytkowników/tenantów.
+    status: done
+  - name: Transport HTTP (SSE / streamable-HTTP)
+    description: Uruchamianie serwera jako trwałej usługi HTTP z endpointami /sse i /mcp, z obsługą uwierzytelniania per-użytkownik przez nagłówki Authorization oraz X-Atlassian-Cloud-Id, oprócz standardowego trybu stdio.
+    status: done
+  - name: Kontrola dostępu do narzędzi
+    description: Filtrowanie dostępnych narzędzi (ENABLED_TOOLS / --enabled-tools), tryb tylko-do-odczytu (READ_ONLY_MODE) blokujący operacje zapisu oraz filtrowanie po projektach Jira i przestrzeniach Confluence.
+    status: done
+  - name: Obsługa proxy i niestandardowych nagłówków HTTP
+    description: Konfigurowalne proxy HTTP/HTTPS/SOCKS (globalne i per-usługa) oraz możliwość dodawania własnych nagłówków HTTP do zapytań, z maskowaniem wrażliwych wartości w logach.
+    status: done
+  - name: Dystrybucja Docker i pakiet PyPI
+    description: Oficjalny obraz kontenera publikowany na GHCR oraz pakiet publikowany na PyPI, z automatycznym publikowaniem przez GitHub Actions (workflow publish.yml i docker-publish.yml).
+    status: done
+  - name: Rozbudowane testy jednostkowe i integracyjne
+    description: Szeroki zestaw testów w katalogu tests/ (unit dla Jira, Confluence, modeli, narzędzi pomocniczych oraz integration dla protokołu MCP, uwierzytelniania, SSL, proxy, cyklu życia transportu).
+    status: done
+stack:
+  languages:
+    - Python
+  frameworks:
+    - FastMCP
+    - Model Context Protocol (MCP) SDK
+    - Starlette
+    - Uvicorn
+    - atlassian-python-api
+    - httpx
+    - Pydantic
+    - BeautifulSoup4
+    - Click
+  infra:
+    - Docker
+    - GitHub Actions (CI/CD)
+    - GHCR (GitHub Container Registry)
+    - PyPI
+    - Devcontainer
+links: {}
+status: active
+tags:
+  - MCP
+  - Atlassian
+  - Jira
+  - Confluence
+  - AI-integration
+  - LLM-tools
+  - Python
+  - Docker
+  - OAuth2
+  - open-source
+ai:
+  generated_at: 2026-07-21T01:07:31.791Z
+  source_commit: f130eb75ad8210d971f006d01e0c8437d6610877
+locked: []
